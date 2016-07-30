@@ -1,0 +1,49 @@
+BASE_URL = "http://moviego.co"
+
+########################################################################################
+def NormalizeURL(url):
+
+	return url
+
+########################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTML.ElementFromURL(url)
+	title = page.xpath("//h1[@id='news-title']/text()")[0]
+	description = page.xpath("//div[@itemprop='description']/text()")[0]
+	thumb = page.xpath("//div[@class='poster cf']/img/@src")[0]
+	
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = BASE_URL + str(thumb)
+	)	
+
+########################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+        	MediaObject(
+			parts = [
+				PartObject(
+					key = 
+						Callback(PlayVideo, url = url, post_url=url))
+				],
+			video_resolution = 720,
+			bitrate = 3000,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+			)
+	]
+
+########################################################################################
+@indirect
+def PlayVideo(url):
+
+	page = HTML.ElementFromURL(url)
+	videoscript = page.xpath("//div[@id='MT_overroll']/script/text()")
+	videoid = Regex('id:\s([^"]+)}').search(str(videoscript)).groups()[0].replace('\\','').replace("'","")
+	html = HTTP.Request("http://moviego.cc/engine/ajax/getlink.php?id=" + videoid, cacheTime = CACHE_1MONTH).content
+	videolink = Regex('"file":"([^"]+)"').search(html).groups()[0]
+	return IndirectResponse(VideoClipObject, key=videolink.replace('\\',''))

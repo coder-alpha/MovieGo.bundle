@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+  <key>URL</key>
+  <dict>
+    <key>MovieGo</key>
+    <dict>
+      <key>URLPatterns</key>
+      <array>
+        <string>http://moviego.cc/</string>
+        <string>http://moviego.co</string>
+      </array>
+    </dict>
+  </dict>
+</dict>
+</plist>
