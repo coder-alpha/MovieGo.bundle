@@ -82,6 +82,7 @@ def PerformUpdate():
 def ShowCategory(title, category, page_count):
 
 	oc = ObjectContainer(title1 = title)
+	thistitle = title
 	if page_count == "1":
 		page = HTML.ElementFromURL(BASE_URL + str(category))
 	else:
@@ -100,7 +101,7 @@ def ShowCategory(title, category, page_count):
 		)
 
 	oc.add(NextPageObject(
-		key = Callback(ShowCategory, title = category, category = category, page_count = int(page_count) + 1),
+		key = Callback(ShowCategory, title = thistitle, category = category, page_count = int(page_count) + 1),
 		title = "More...",
 		thumb = R(ICON_NEXT)
 			)
