@@ -1,49 +1,95 @@
+#!/usr/bin/env python
+
+"""Moviego.(cc|co) Service Code"""
+
 BASE_URL = "http://moviego.co"
-
-########################################################################################
-def NormalizeURL(url):
-
-	return url
 
 ########################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
-	title = page.xpath("//h1[@id='news-title']/text()")[0]
-	description = page.xpath("//div[@itemprop='description']/text()")[0]
-	thumb = page.xpath("//div[@class='poster cf']/img/@src")[0]
-	
-	return VideoClipObject(
-		title = title,
-		summary = description,
-		thumb = BASE_URL + str(thumb)
-	)	
+	try:
+		page = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
+
+	title = page.xpath("//h1[@id='news-title']/text()")
+	if not title:
+		raise Ex.MediaExpired
+	title = Regex(r'(\s\(\d+\)$)').sub(r'', title[0].strip())
+
+	summary = page.xpath("//div[@itemprop='description']/text()")
+	summary = (Regex(r'(Watch\sfree\smovie\sonline\s[\'\"]{}.+$)'.format(title)).sub(r'', summary[0])).strip() if summary else None
+
+	thumb = page.xpath("//div[@class='poster cf']/img/@src")
+	thumb2 = page.xpath('//meta[@property="og:image"]/@content')
+
+	fallback = 'http://i.imgur.com/75YO83o.jpg'
+	thumb = BASE_URL + thumb[0] if thumb else fallback
+	thumb2 = thumb2[0] if thumb2 else fallback
+
+	time_stamp = int(Datetime.TimestampFromDatetime(Datetime.Now()))
+	art = '/:/plugins/com.plexapp.plugins.moviego/resources/art-default.jpg?t={}'.format(time_stamp)
+
+	rating = page.xpath('//span[@class="imdb rki"]/text()')
+
+	genres = page.xpath('//td[text()="Genre:"]/following-sibling::td/a/text()')
+
+	dur = page.xpath('//td[text()="Duration:"]/following-sibling::td/text()')
+	if dur:
+		try:
+			duration = Datetime.MillisecondsFromString(dur[0])
+		except:
+			try:
+				duration = 0
+				for i, s in Regex(r'(\d+)(h|min|sec)').findall(dur[0]):
+					if s == 'h':
+						duration += int(i)*60*60*1000
+					elif s == 'min':
+						duration += int(i)*60*1000
+					elif s == 'sec':
+						duration += int(i)*1000
+			except:
+				duration = None
+
+	year = page.xpath('//td[text()="Year:"]/following-sibling::td//a/text()')
+
+	return MovieObject(
+		title=title,
+		summary=summary,
+		duration=duration,
+		genres=genres[1:] if genres else [],
+		year=int(year[0]) if year else None,
+		thumb=Resource.ContentsOfURLWithFallback([thumb, thumb2, fallback]),
+		rating=float(rating[0]) if rating else None,
+		source_title='MovieGo',
+		art=art
+		)
 
 ########################################################################################
 def MediaObjectsForURL(url):
 
 	return [
-        	MediaObject(
-			parts = [
-				PartObject(
-					key = 
-						Callback(PlayVideo, url = url, post_url=url))
-				],
-			video_resolution = 720,
-			bitrate = 3000,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
+		MediaObject(
+			parts=[PartObject(key=Callback(PlayVideo, url=url))],
+			bitrate=3000,
+			video_resolution=720,
+			#container=Container.MP4, #remove '#' to allow direct stream/play
+			#video_codec=VideoCodec.H264, #remove '#' to allow direct stream/play
+			audio_codec=AudioCodec.AAC,
+			audio_channels=2,
+			optimized_for_streaming=True
 			)
-	]
+		]
 
 ########################################################################################
 @indirect
-def PlayVideo(url):
+def PlayVideo(url, **kwargs):
+	page = HTTP.Request(url).content
 
-	page = HTML.ElementFromURL(url)
-	videoscript = page.xpath("//div[@id='MT_overroll']/script/text()")
-	videoid = Regex('id:\s([^"]+)}').search(str(videoscript)).groups()[0].replace('\\','').replace("'","")
-	html = HTTP.Request("http://moviego.cc/engine/ajax/getlink.php?id=" + videoid, cacheTime = CACHE_1MONTH).content
-	videolink = Regex('"file":"([^"]+)"').search(html).groups()[0]
-	return IndirectResponse(VideoClipObject, key=videolink.replace('\\',''))
+	vid = Regex(r'id\:\s[\'\"]([^\'\"]+)[\'\"]\}').search(page)
+	if vid:
+		data = JSON.ObjectFromURL('http://moviego.cc/engine/ajax/getlink.php?id={}'.format(vid.group(1)), cacheTime=CACHE_1MONTH)
+		Log.Debug('* PlayVideo URL = {}'.format(data['file']))
+		return IndirectResponse(VideoClipObject, key=data['file'])
+
+	raise Ex.MediaNotAvailable
