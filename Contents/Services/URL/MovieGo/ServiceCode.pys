@@ -55,10 +55,10 @@ def MetadataObjectForURL(url):
 
 	return MovieObject(
 		title=title,
+		summary=summary,
 		duration=duration,
 		genres=genres[1:] if genres else [],
 		year=int(year[0]) if year else None,
-		summary=summary.strip() if summary else None,
 		thumb=Resource.ContentsOfURLWithFallback([thumb, thumb2, fallback]),
 		rating=float(rating[0]) if rating else None,
 		source_title='MovieGo',
@@ -73,8 +73,8 @@ def MediaObjectsForURL(url):
 			parts=[PartObject(key=Callback(PlayVideo, url=url))],
 			bitrate=3000,
 			video_resolution=720,
-			#container=Container.MP4,
-			#video_codec=VideoCodec.H264,
+			#container=Container.MP4, #remove '#' to allow direct stream/play
+			#video_codec=VideoCodec.H264, #remove '#' to allow direct stream/play
 			audio_codec=AudioCodec.AAC,
 			audio_channels=2,
 			optimized_for_streaming=True
