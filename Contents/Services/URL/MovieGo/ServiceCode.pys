@@ -50,6 +50,8 @@ def MetadataObjectForURL(url):
 						duration += int(i)*1000
 			except:
 				duration = None
+	else:
+		duration = None
 
 	year = page.xpath('//td[text()="Year:"]/following-sibling::td//a/text()')
 
