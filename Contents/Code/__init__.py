@@ -41,11 +41,11 @@ def Start():
 	DirectoryObject.art = R(ART)
 	VideoClipObject.thumb = R(ICON_MOVIES)
 	VideoClipObject.art = R(ART)
-	
+
 	HTTP.CacheTime = CACHE_1HOUR
 	HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36'
 	HTTP.Headers['Referer'] = 'http://moviego.co/'
-	
+
 ######################################################################################
 # Menu hierarchy
 
@@ -58,7 +58,7 @@ def MainMenu():
 	oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search MovieGo', prompt='Search for...'))
 	for each in page.xpath("//ul[@class='cf']/li"):
 		try:
-			title = each.xpath("./a/text()")[0]
+			title = each.xpath("./a/text()")[0].strip()
 			category = each.xpath("./a/@href")[0]
 			oc.add(DirectoryObject(
 				key = Callback(ShowCategory, title = title, category = category, page_count = 1),
@@ -78,7 +78,7 @@ def PerformUpdate():
 ######################################################################################
 # Creates page url from category and creates objects from that page
 
-@route(PREFIX + "/showcategory")	
+@route(PREFIX + "/showcategory")
 def ShowCategory(title, category, page_count):
 
 	oc = ObjectContainer(title1 = title)
@@ -90,9 +90,9 @@ def ShowCategory(title, category, page_count):
 
 	for each in page.xpath("//div[@class='short_content']"):
 		url = each.xpath("./a/@href")[0]
-		title = each.xpath("./a/div/text()")[0]
+		title = each.xpath("./a/div/text()")[0].strip()
 		thumb = each.xpath("./a/img/@src")[0]
-		
+
 		oc.add(DirectoryObject(
 			key = Callback(EpisodeDetail, title = title, url = url),
 			title = title,
@@ -106,7 +106,7 @@ def ShowCategory(title, category, page_count):
 		thumb = R(ICON_NEXT)
 			)
 		)
-	
+
 	return oc
 
 ######################################################################################
@@ -114,22 +114,22 @@ def ShowCategory(title, category, page_count):
 
 @route(PREFIX + "/episodedetail")
 def EpisodeDetail(title, url):
-	
+
 	oc = ObjectContainer(title1 = title)
 	page = HTML.ElementFromURL(url)
-	title = page.xpath("//h1[@id='news-title']/text()")[0]
-	description = page.xpath("//div[@itemprop='description']/text()")[0]
+	title = page.xpath("//h1[@id='news-title']/text()")[0].strip()
+	description = page.xpath("//div[@itemprop='description']/text()")[0].strip()
 	thumb = page.xpath("//div[@class='poster cf']/img/@src")[0]
-	
+
 	oc.add(VideoClipObject(
 		title = title,
 		summary = description,
 		thumb = BASE_URL + str(thumb),
 		url = url
 		)
-	)	
-	
-	return oc	
+	)
+
+	return oc
 
 ####################################################################################################
 @route(PREFIX + "/search")
@@ -140,9 +140,9 @@ def Search(query):
 
 	for each in page.xpath("//div[@class='short_content']"):
 		url = each.xpath("./a/@href")[0]
-		title = each.xpath("./a/div/text()")[0]
+		title = each.xpath("./a/div/text()")[0].strip()
 		thumb = each.xpath("./a/img/@src")[0]
-		
+
 		oc.add(DirectoryObject(
 			key = Callback(EpisodeDetail, title = title, url = url),
 			title = title,
