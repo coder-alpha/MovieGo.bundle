@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
-"""Moviego.(cc|co) Service Code"""
+"""Moviego.cc Service Code"""
 
-BASE_URL = "http://moviego.co"
+from __builtin__ import any
+
+BASE_URL = "http://moviego.cc"
+FALLBACK = "http://i.imgur.com/75YO83o.jpg"
 
 ########################################################################################
 def MetadataObjectForURL(url):
 
 	try:
-		page = HTML.ElementFromURL(url)
+		page = HTML.ElementFromURL(url, cacheTime=10)
 	except:
 		raise Ex.MediaNotAvailable
 
@@ -23,9 +26,8 @@ def MetadataObjectForURL(url):
 	thumb = page.xpath("//div[@class='poster cf']/img/@src")
 	thumb2 = page.xpath('//meta[@property="og:image"]/@content')
 
-	fallback = 'http://i.imgur.com/75YO83o.jpg'
-	thumb = BASE_URL + thumb[0] if thumb else fallback
-	thumb2 = thumb2[0] if thumb2 else fallback
+	thumb = BASE_URL + thumb[0] if thumb else FALLBACK
+	thumb2 = thumb2[0] if thumb2 else FALLBACK
 
 	time_stamp = int(Datetime.TimestampFromDatetime(Datetime.Now()))
 	art = '/:/plugins/com.plexapp.plugins.moviego/resources/art-default.jpg?t={}'.format(time_stamp)
@@ -61,14 +63,34 @@ def MetadataObjectForURL(url):
 		duration=duration,
 		genres=genres[1:] if genres else [],
 		year=int(year[0]) if year else None,
-		thumb=Resource.ContentsOfURLWithFallback([thumb, thumb2, fallback]),
+		thumb=Resource.ContentsOfURLWithFallback([thumb, thumb2, FALLBACK]),
 		rating=float(rating[0]) if rating else None,
 		source_title='MovieGo',
 		art=art
 		)
 
 ########################################################################################
+@deferred
 def MediaObjectsForURL(url):
+	gdUrl = None
+	html = HTML.ElementFromURL(url, cacheTime=10)
+	iframe = html.xpath('//iframe/@src')
+
+	if iframe and any(('.google.com' in s) for s in iframe):
+		iframe = [u for u in iframe if '.google.com' in u]
+		gdUrl = iframe[0] if iframe else None
+	elif iframe:
+		iframe = [u for u in iframe if 'youtube' not in u]
+		if iframe:
+			html2 = HTML.ElementFromURL(iframe[0], cacheTime=10)
+			gdUrl = html2.xpath('//iframe/@src')[0] if html2.xpath('//iframe/@src') else None
+
+	if gdUrl:
+		try:
+			Log.Debug('* PlayVideo URL = {0}'.format(gdUrl))
+			return URLService.MediaObjectsForURL(gdUrl)
+		except:
+			Log.Exception(u"Cannot find media for '{}'".format(iframe[0]))
 
 	return [
 		MediaObject(
@@ -86,12 +108,12 @@ def MediaObjectsForURL(url):
 ########################################################################################
 @indirect
 def PlayVideo(url, **kwargs):
-	page = HTTP.Request(url).content
+	page = HTTP.Request(url, cacheTime=10).content
 
 	vid = Regex(r'id\:\s[\'\"]([^\'\"]+)[\'\"]\}').search(page)
 	if vid:
-		data = JSON.ObjectFromURL('http://moviego.cc/engine/ajax/getlink.php?id={}'.format(vid.group(1)), cacheTime=CACHE_1MONTH)
-		Log.Debug('* PlayVideo URL = {}'.format(data['file']))
+		data = JSON.ObjectFromURL(BASE_URL + '/engine/ajax/getlink.php?id={}'.format(vid.group(1)), cacheTime=CACHE_1HOUR)
+		Log.Debug('* PlayVideo URL = {0}'.format(data['file']))
 		return IndirectResponse(VideoClipObject, key=data['file'])
 
 	raise Ex.MediaNotAvailable
