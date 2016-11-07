@@ -16,8 +16,7 @@ ICON_MOVIES = "icon-movies.png"
 ICON_SERIES = "icon-tv.png"
 ICON_CINEMA = "icon-cinema.png"
 ICON_QUEUE = "icon-queue.png"
-BASE_URL = "http://moviego.co"
-CAT_URL = "http://moviego.cc"
+BASE_URL = "http://moviego.cc"
 
 import updater, os, sys
 from lxml import html
@@ -44,7 +43,7 @@ def Start():
 
 	HTTP.CacheTime = CACHE_1HOUR
 	HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36'
-	HTTP.Headers['Referer'] = 'http://moviego.co/'
+	HTTP.Headers['Referer'] = BASE_URL + '/'
 
 ######################################################################################
 # Menu hierarchy
@@ -136,7 +135,7 @@ def EpisodeDetail(title, url):
 def Search(query):
 
 	oc = ObjectContainer(title2='Search Results')
-	page = HTML.ElementFromURL(BASE_URL + 'index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story=%s' % String.Quote(query, usePlus=True))
+	page = HTML.ElementFromURL(BASE_URL + '/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story=%s' % String.Quote(query, usePlus=True))
 
 	for each in page.xpath("//div[@class='short_content']"):
 		url = each.xpath("./a/@href")[0]
