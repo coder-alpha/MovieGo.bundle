@@ -18,17 +18,6 @@ ICON_CINEMA = "icon-cinema.png"
 ICON_QUEUE = "icon-queue.png"
 BASE_URL = "http://moviego.cc"
 
-import updater, os, sys
-from lxml import html
-try:
-	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins/View47.bundle/Contents/Code/Modules/MovieGo"
-except:
-	path = os.getcwd().split("Plug-in Support")[0]+"Plug-ins/View47.bundle/Contents/Code/Modules/MovieGo"
-if path not in sys.path:
-	sys.path.append(path)
-
-updater.init(repo = '/jwsolve/MovieGo.bundle', branch = 'master')
-
 ######################################################################################
 # Set global variables
 
@@ -52,7 +41,6 @@ def Start():
 def MainMenu():
 
 	oc = ObjectContainer()
-	#updater.add_button_to(oc, PerformUpdate)
 	page = HTML.ElementFromURL(BASE_URL)
 	oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search MovieGo', prompt='Search for...'))
 	for each in page.xpath("//ul[@class='cf']/li"):
@@ -68,11 +56,6 @@ def MainMenu():
 		except:
 			pass
 	return oc
-
-######################################################################################
-@route(PREFIX + "/performupdate")
-def PerformUpdate():
-	return updater.PerformUpdate()
 
 ######################################################################################
 # Creates page url from category and creates objects from that page
