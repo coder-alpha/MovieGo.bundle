@@ -18,15 +18,6 @@ ICON_CINEMA = "icon-cinema.png"
 ICON_QUEUE = "icon-queue.png"
 BASE_URL = "http://moviego.cc"
 
-import os, sys
-from lxml import html
-try:
-	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins/View47.bundle/Contents/Code/Modules/MovieGo"
-except:
-	path = os.getcwd().split("Plug-in Support")[0]+"Plug-ins/View47.bundle/Contents/Code/Modules/MovieGo"
-if path not in sys.path:
-	sys.path.append(path)
-
 ######################################################################################
 # Set global variables
 
