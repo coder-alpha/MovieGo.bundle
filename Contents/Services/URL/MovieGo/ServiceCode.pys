@@ -4,6 +4,11 @@
 
 from __builtin__ import any
 
+RE_TITLE = Regex(r'( \(\d+\)$)')
+RE_DUR = Regex(r'(\d+)(h|min|sec)')
+RE_UPPOD = Regex(r'([Uu]ppod\(\{)')
+RE_FILE = Regex(r'["\']?file["\']? *?\: *?["\'](http[^"\'\?]+(?<!m3u8|smil))["\']')
+RE_VID = Regex(r'id\: ["\']([^"\']+)["\']\}')
 BASE_URL = "http://moviego.cc"
 FALLBACK = "http://i.imgur.com/75YO83o.jpg"
 
@@ -18,10 +23,10 @@ def MetadataObjectForURL(url):
 	title = page.xpath("//h1[@id='news-title']/text()")
 	if not title:
 		raise Ex.MediaExpired
-	title = Regex(r'(\s\(\d+\)$)').sub(r'', title[0].strip())
+	title = RE_TITLE.sub(r'', title[0].strip())
 
 	summary = page.xpath("//div[@itemprop='description']/text()")
-	summary = (Regex(r'(Watch\sfree\smovie\sonline\s[\'\"]{}.+$)'.format(title)).sub(r'', summary[0])).strip() if summary else None
+	summary = (Regex(r'(Watch free movie online ["\']{}.+$)'.format(title)).sub(r'', summary[0])).strip() if summary else None
 
 	thumb = page.xpath("//div[@class='poster cf']/img/@src")
 	thumb2 = page.xpath('//meta[@property="og:image"]/@content')
@@ -43,7 +48,7 @@ def MetadataObjectForURL(url):
 		except:
 			try:
 				duration = 0
-				for i, s in Regex(r'(\d+)(h|min|sec)').findall(dur[0]):
+				for i, s in RE_DUR.findall(dur[0]):
 					if s == 'h':
 						duration += int(i)*60*60*1000
 					elif s == 'min':
@@ -110,7 +115,13 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, **kwargs):
 	page = HTTP.Request(url, cacheTime=10).content
 
-	vid = Regex(r'id\:\s[\'\"]([^\'\"]+)[\'\"]\}').search(page)
+	if RE_UPPOD.search(page):
+		r = RE_FILE.search(page)
+		if r:
+			Log.Debug('* PlayVideo URL = {0}'.format(r.group(1)))
+			return IndirectResponse(VideoClipObject, key=r.group(1))
+
+	vid = RE_VID.search(page)
 	if vid:
 		data = JSON.ObjectFromURL(BASE_URL + '/engine/ajax/getlink.php?id={}'.format(vid.group(1)), cacheTime=CACHE_1HOUR)
 		Log.Debug('* PlayVideo URL = {0}'.format(data['file']))
