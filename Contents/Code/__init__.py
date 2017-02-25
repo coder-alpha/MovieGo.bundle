@@ -108,7 +108,7 @@ def ShowCategory(title, category, page_count):
 		page = GetPageElements(BASE_URL + str(category) + '/page/' + str(page_count) + '/')
 
 	for each in page.xpath("//div[@class='short_content']"):
-		url = each.xpath("./a/@href")[0]
+		url = BASE_URL + each.xpath("./a/@href")[0]
 		title = each.xpath("./a/div/text()")[0].strip()
 		thumb = each.xpath("./a/img/@src")[0]
 		thumb = GetThumb(BASE_URL + str(thumb))
@@ -155,22 +155,23 @@ def EpisodeDetail(title, url):
 		)
 	except:
 		pass
-	#try:
-	useRedirector = 'false'
-	redStat = ''
-	if UsingOption('ToggleRedirector'):
-		useRedirector = 'true'
-		redStat = ' (via Redirector)'
-		
-	gdUrl = GetGoogleLink(url=url)
-	durl = "mvg2://" + E(JSON.StringFromObject({"apilink":('http://api.getlinkdrive.com/getlink?url='+gdUrl),"url":url, "title":title, "thumb": str(thumb), "useRedirector":useRedirector}))
-	oc.add(VideoClipObject(
-		title=title + ' (via API)' + redStat,
-		thumb= str(thumb),
-		url=durl
-		))
-	#except:
-	#	pass
+	try:
+		useRedirector = 'false'
+		redStat = ''
+		if UsingOption('ToggleRedirector'):
+			useRedirector = 'true'
+			redStat = ' (via Redirector)'
+			
+		gdUrl = GetGoogleLink(url=url)
+		if gdUrl != None:
+			durl = "mvg2://" + E(JSON.StringFromObject({"apilink":('http://api.getlinkdrive.com/getlink?url='+gdUrl),"url":url, "title":title, "thumb": str(thumb), "useRedirector":useRedirector}))
+			oc.add(VideoClipObject(
+				title=title + ' (via API)' + redStat,
+				thumb= str(thumb),
+				url=durl
+				))
+	except:
+		pass
 		
 	return oc
 
@@ -312,19 +313,30 @@ def find_between( s, first, last ):
 @route(PREFIX + "/GetGoogleLink")
 def GetGoogleLink(url):
 
-	html = GetPageElements(url)
-	iframe = html.xpath('//iframe/@src')
-	for url in iframe:
-		if 'youtube' not in url:
-			furl = url
-			break
-	
-	html2 = GetPageAsString(furl)
-	driveid = find_between(html2, '2Cexpire|','|driveid')
-	
-	googleLink = 'https://drive.google.com/file/d/%s/view' % driveid
+	try:
+		html = GetPageElements(url)
+		iframe = html.xpath('//iframe/@src')
+		for url in iframe:
+			if 'youtube' not in url:
+				furl = url
+				break
 
-	return googleLink
+		if 'http' not in furl:
+			furl = 'http:' + furl
+		html2 = GetPageAsString(furl)
+		
+		driveid = find_between(html2, '2Cexpire|','|driveid')
+		if driveid == "":
+			return None
+		elif "|" in driveid:
+			dId = driveid.split('|')
+			driveid = dId[len(dId)-1]
+		
+		googleLink = 'https://drive.google.com/file/d/%s/view' % driveid
+
+		return googleLink
+	except:
+		return None
 	
 def test():
 	ret = GetGoogleLink('http://213.183.51.36/play/zRUPCcZyvER5oAm/')
