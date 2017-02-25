@@ -74,7 +74,7 @@ def MainMenu():
 @route(PREFIX + "/menucategory")
 def MenuCategory():
 
-	oc = ObjectContainer(title='Menu')
+	oc = ObjectContainer(title1='Menu')
 	try:
 		page = GetPageElements(BASE_URL)
 		for each in page.xpath("//ul[@class='cf']/li"):
