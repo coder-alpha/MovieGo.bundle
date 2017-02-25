@@ -10,6 +10,13 @@
           <string>https?\:\/\/(?:www\.)?moviego\.c(?:c|o)\/.+</string>
         </array>
       </dict>
+	  <key>MovieGo2</key>
+      <dict>
+        <key>URLPatterns</key>
+        <array>
+          <string>^mvg2\:\/\/.+</string>
+        </array>
+      </dict>
     </dict>
   </dict>
 </plist>

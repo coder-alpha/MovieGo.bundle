@@ -1,0 +1,8 @@
+[
+  {
+    "id": "use_web_proxy",
+    "type": "bool",
+    "label": "Use SSL Web Proxy",
+    "default": "False"
+  }
+]
